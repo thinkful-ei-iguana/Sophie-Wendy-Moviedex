@@ -12,6 +12,8 @@ app.use(function validateBearerToken(req, res, next) {
   const apiToken = process.env.API_BEARER_TOKEN;
   const authToken = req.get("Authorization");
 
+  console.log(apiToken)
+  console.log(authToken)
   if (!authToken || authToken !== apiToken) {
     return res.status(401).json({ error: "DENIED!" });
   }
@@ -24,53 +26,48 @@ app.get("/movie", (req, res) => {
   //validation
   if (genre) {
     let arryGenres = MOVIEDEX.filter(movie => {
-      return movie.genre
+      return movie.genre.toLowerCase().includes(genre)
     })
-    
-    if(!arryGenres.includes(genre)){
-        return res.status(400).send('Genre is not listed');
+
+    if (arryGenres.length < 0) {
+      return res.status(400).send('Genre is not listed');
+    }
+    else {
+      results = arryGenres
     }
   }
 
   if (country) {
     let arryCountry = MOVIEDEX.filter(movie => {
-      movie.country === country
+      return movie.genre.toLowerCase().includes(genre)
     })
-    
-    if(arryCountry === []){
-        return res.status(400).send('Country is not listed');
+
+    if (arryCountry.length === 0) {
+      return res.status(400).send('Country is not listed');
+    }
+    else {
+      results = arryCountry
     }
   }
 
-if (avg_vote) { 
-    if (!Number(avg_vote) > 0 ) {
+  if (avg_vote) {
+    if (!Number(avg_vote) > 0) {
       return res.status(400).send('Need a number higher than 0');
     }
+    else {
+      results = MOVIEDEX.filter(movie => {
+        return Number(movie.avg_vote) >= Number(avg_vote);
+      })
+    }
   }
 
-
-//sorting logic
-if (genre) {
-  results = MOVIEDEX.filter(movie => { return movie.genre.toLowerCase().includes(genre) });
-}
-
-if (country) {
-  results = MOVIEDEX.filter(movie => { return movie.country.toLowerCase().includes(country) });
-}
-
-if (avg_vote) {
-  results = MOVIEDEX.filter(movie => {
-    return Number(movie.avg_vote) >= Number(avg_vote);
-  });
-}
-
-res.json(results);
+  res.json(results);
 });
 
 app.use((error, req, res, next) => {
   let response
   if (process.env.NODE_ENV === 'production') {
-    response = { error: { message: 'server error' }}
+    response = { error: { message: 'server error' } }
   } else {
     response = { error }
   }
